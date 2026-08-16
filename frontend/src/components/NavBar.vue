@@ -11,7 +11,7 @@
           <span class="navbar-toggler-bar"></span>
           <span class="navbar-toggler-bar"></span>
         </button>
-        <button class="navbar-brand landing-brand" type="button" @click="handleBrandClick">TripStar</button>
+        <button class="navbar-brand landing-brand" type="button" @click="handleBrandClick">CloudWay</button>
       </div>
       <div class="navbar-collapse landing-navbar-collapse" id="navbarToggler">
         <ul class="navbar-nav ml-auto landing-nav">
@@ -21,7 +21,7 @@
               rel="tooltip"
               title="Star on GitHub"
               data-placement="bottom"
-              href="https://github.com/1sdv/TripStar"
+              href="https://github.com/dof141/CloudWay"
               target="_blank"
               style="display:inline-flex;align-items:center;gap:6px;"
             >

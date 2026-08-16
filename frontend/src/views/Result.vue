@@ -2008,12 +2008,12 @@ const buildExportHTML = (mapDataUrl: string = ''): string => {
   }
 
   // 底部二维码 — 项目开源地址
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent('https://github.com/1sdv/TripStar')}`
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent('https://github.com/dof141/CloudWay')}`
   const footerHTML = `
     <div style="text-align:center;padding:24px 16px 16px;border-top:1px solid #e8e8e8;margin-top:8px;">
       <img src="${qrUrl}" style="width:120px;height:120px;margin-bottom:10px;" crossorigin="anonymous" />
-      <div style="font-size:13px;color:#667eea;font-weight:600;margin-bottom:4px;">TripStar</div>
-      <div style="font-size:11px;color:#aaa;">https://github.com/1sdv/TripStar</div>
+      <div style="font-size:13px;color:#667eea;font-weight:600;margin-bottom:4px;">CloudWay</div>
+      <div style="font-size:11px;color:#aaa;">https://github.com/dof141/CloudWay</div>
       <div style="font-size:11px;color:#bbb;margin-top:6px;">${t('result.export.footer')}</div>
     </div>`
 

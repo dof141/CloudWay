@@ -1,8 +1,8 @@
 {
   "app": {
-    "title": "TripStar",
-    "brand": "TripStar",
-    "subBrand": "TripStar · AI 旅行エンジン",
+    "title": "CloudWay",
+    "brand": "CloudWay",
+    "subBrand": "CloudWay - AI 旅行エンジン",
     "badge": "AI 旅行アシスタント",
     "language": {
       "label": "言語",
@@ -10,7 +10,7 @@
       "ja": "日本語",
       "en": "English"
     },
-    "footerBrand": "TripStar",
+    "footerBrand": "CloudWay",
     "footerCopy": "{year} All rights reserved.",
     "footerTech": "Powered by HelloAgents + AMap MCP"
   },
@@ -231,7 +231,7 @@
     "chat": {
       "toggle": "AI オンライン",
       "title": "旅程 AI チャット",
-      "welcome": "こんにちは。TripStar AI です。旅程に関することは何でも聞いてください。例：",
+      "welcome": "こんにちは。CloudWay AI です。旅程に関することは何でも聞いてください。例：",
       "quickPriceLabel": "料金確認",
       "quickSuitabilityLabel": "高齢者向け？",
       "quickMealLabel": "食費確認",
@@ -285,7 +285,7 @@
     },
     "export": {
       "filePrefix": "旅行プラン",
-      "footer": "TripStar · AI 旅行エンジンで生成",
+      "footer": "CloudWay - AI 旅行エンジンで生成",
       "title": "{city} 旅行プラン",
       "subtitle": "{start} 〜 {end} · {days} 日間",
       "perNight": "/泊",

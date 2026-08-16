@@ -11,7 +11,7 @@
             <!-- <p class="landing-hero-badge text-center">{{ t('home.heroBadge') }}</p> -->
             <div class="title-brand">
               <h1 class="presentation-title">
-                TRIPSTAR
+                CLOUDWAY
               </h1>
             </div>
             <h2 class="presentation-subtitle text-center">{{ t('home.titleLine') }}</h2>
