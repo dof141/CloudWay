@@ -54,6 +54,10 @@ RUN uvx amap-mcp-server --help || true
 COPY backend/ ./backend/
 RUN cd backend && npm install --registry=https://registry.npmmirror.com
 
+# 复制 12306 Skill，供去程车票查询 Agent 调用
+COPY external/12306-skill/ ./external/12306-skill/
+ENV TRAIN_TICKET_SKILL_DIR=/app/external/12306-skill
+
 # 从阶段一复制前端构建产物
 COPY --from=frontend-builder /build/dist ./frontend/dist
 
