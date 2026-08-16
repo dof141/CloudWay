@@ -583,8 +583,8 @@ import NavBar from '@/components/NavBar.vue'
 import OverviewAttractionCard from '@/components/OverviewAttractionCard.vue'
 import AIChat from '@/components/AIChat.vue'
 import type { TripPlan, TripPlanResponse, KnowledgeGraphData, GraphCategory, Attraction, Meal, Hotel, WeatherInfo } from '@/types'
+import apiClient from '@/services/api'
 import {
-  getRuntimeApiBaseUrl,
   getRuntimeMapJsKey,
   getRuntimeGoogleMapsApiKey,
   getBackendRuntimeSettings,
@@ -1781,7 +1781,6 @@ const restoreBudgetItem = (pendingItem: BudgetRestoreItem) => {
 const loadAttractionPhotos = async () => {
   if (!tripPlan.value) return
 
-  const apiBase = getRuntimeApiBaseUrl()
   const city = tripPlan.value.city
   const uniqueNames = Array.from(
     new Set(
@@ -1801,10 +1800,8 @@ const loadAttractionPhotos = async () => {
       const name = uniqueNames[index]
 
       try {
-        const response = await fetch(
-          `${apiBase}/api/poi/photo?name=${encodeURIComponent(name)}&city=${encodeURIComponent(city)}`
-        )
-        const data = await response.json()
+        const response = await apiClient.get('/api/poi/photo', { params: { name, city } })
+        const data = response.data
         if (data.success && data.data.photo_url) {
           attractionPhotos.value[name] = data.data.photo_url
         }
@@ -2649,10 +2646,6 @@ const addGoogleAttractionMarkers = async () => {
     // 创建自定义 DOM 元素以模拟 AMap 的原生样式
     const div = document.createElement('div')
     div.innerHTML = buildMarkerContent(attraction.dayIndex + 1, attraction.attrIndex + 1)
-    // 为了使 HTML 居中在点上，可以用 Marker 的 icon 承载或者用 AdvancedMarkerElement (如果你需要标准 API)。
-    // 这里采用兼容大多数的简单的 svg data URI：
-    const svgContent = buildFeatherCircleSvgDataUrl(34, '#d76e42', '#a14625')
-    
     // 这里如果想完全复用 DOM 较为复杂，我们可以直接采用原生的 google.maps.Marker 与自定义 icon
     // 用一个简单的 SVG data URI 画一个有数字的 icon
     const markerText = `${attraction.dayIndex + 1}-${attraction.attrIndex + 1}`

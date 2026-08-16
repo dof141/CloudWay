@@ -37,6 +37,9 @@
     "title": "設定",
     "saveApply": "保存して適用",
     "cancel": "キャンセル",
+    "localOnlyNotice": "設定はこのブラウザにのみ保存され、サーバーには保存されません。",
+    "clear": "設定を削除",
+    "clearConfirm": "このブラウザに保存された設定をすべて削除しますか？",
     "labels": {
       "apiBaseUrl": "バックエンド URL",
       "amapJsKey": "AMap JS Key",
@@ -59,7 +62,9 @@
     "messages": {
       "loadFailed": "設定の読み込みに失敗しました",
       "saveFailed": "設定の保存に失敗しました",
-      "saved": "設定を保存して適用しました"
+      "saved": "設定をこのブラウザに保存しました",
+      "clearFailed": "設定の削除に失敗しました",
+      "cleared": "ブラウザの設定を削除しました"
     }
   },
   "home": {

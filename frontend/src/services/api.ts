@@ -14,6 +14,8 @@ const ENV_AMAP_WEB_JS_KEY = import.meta.env.VITE_AMAP_WEB_JS_KEY ?? ''
 const RUNTIME_API_BASE_STORAGE_KEY = 'tripstar.runtime.api_base_url'
 const RUNTIME_AMAP_WEB_JS_KEY_STORAGE_KEY = 'tripstar.runtime.amap_web_js_key'
 const RUNTIME_GOOGLE_MAPS_API_KEY_STORAGE_KEY = 'tripstar.runtime.google_maps_api_key'
+const RUNTIME_BACKEND_SETTINGS_STORAGE_KEY = 'cloudway.runtime.backend_settings.v1'
+const RUNTIME_SETTINGS_HEADER = 'X-CloudWay-Runtime-Settings'
 const DEFAULT_RUNTIME_BACKEND_SETTINGS: BackendRuntimeSettings = {
   vite_amap_web_key: '',
   vite_amap_web_js_key: '',
@@ -60,12 +62,6 @@ interface SubmitTripPlanResponse {
 interface GenerateTripPlanOptions {
   onTaskCreated?: (task: SubmitTripPlanResponse) => void
   onTaskEvent?: (event: TripTaskEvent) => void
-}
-
-interface RuntimeSettingsApiResponse {
-  success: boolean
-  message?: string
-  data?: Partial<BackendRuntimeSettings>
 }
 
 interface TripHistoryResponse {
@@ -159,6 +155,42 @@ const normalizeBackendRuntimeSettings = (
     DEFAULT_RUNTIME_BACKEND_SETTINGS.openai_model,
 })
 
+const readStoredBackendRuntimeSettings = (): BackendRuntimeSettings => {
+  if (typeof window === 'undefined') return { ...DEFAULT_RUNTIME_BACKEND_SETTINGS }
+
+  const raw = window.localStorage.getItem(RUNTIME_BACKEND_SETTINGS_STORAGE_KEY)
+  if (!raw) return { ...DEFAULT_RUNTIME_BACKEND_SETTINGS }
+
+  try {
+    return normalizeBackendRuntimeSettings(JSON.parse(raw) as Partial<BackendRuntimeSettings>)
+  } catch {
+    window.localStorage.removeItem(RUNTIME_BACKEND_SETTINGS_STORAGE_KEY)
+    return { ...DEFAULT_RUNTIME_BACKEND_SETTINGS }
+  }
+}
+
+const writeStoredBackendRuntimeSettings = (
+  settings: Partial<BackendRuntimeSettings>
+): BackendRuntimeSettings => {
+  const normalized = normalizeBackendRuntimeSettings(settings)
+  if (typeof window !== 'undefined') {
+    window.localStorage.setItem(RUNTIME_BACKEND_SETTINGS_STORAGE_KEY, JSON.stringify(normalized))
+  }
+  return normalized
+}
+
+const encodeRuntimeSettingsHeader = (): string => {
+  if (typeof window === 'undefined') return ''
+
+  const settings = readStoredBackendRuntimeSettings()
+  const bytes = new TextEncoder().encode(JSON.stringify(settings))
+  let binary = ''
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte)
+  }
+  return window.btoa(binary)
+}
+
 const emitRuntimeSettingsUpdated = () => {
   if (typeof window === 'undefined') return
   window.dispatchEvent(new CustomEvent(RUNTIME_SETTINGS_UPDATED_EVENT))
@@ -175,6 +207,7 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     config.baseURL = getRuntimeApiBaseUrl()
+    config.headers.set(RUNTIME_SETTINGS_HEADER, encodeRuntimeSettingsHeader())
     console.log('发送请求:', config.method?.toUpperCase(), config.url)
     return config
   },
@@ -197,48 +230,32 @@ apiClient.interceptors.response.use(
 )
 
 export async function getBackendRuntimeSettings(): Promise<BackendRuntimeSettings> {
-  try {
-    const response = await apiClient.get<RuntimeSettingsApiResponse>('/api/settings')
-    return normalizeBackendRuntimeSettings(response.data?.data)
-  } catch (error: any) {
-    console.error('读取运行时配置失败:', error)
-    throw new Error(error.response?.data?.detail || error.message || '读取配置失败')
-  }
+  return readStoredBackendRuntimeSettings()
 }
 
 export async function updateBackendRuntimeSettings(
   updates: Partial<BackendRuntimeSettings>
 ): Promise<BackendRuntimeSettings> {
-  try {
-    const response = await apiClient.put<RuntimeSettingsApiResponse>('/api/settings', updates)
-    return normalizeBackendRuntimeSettings(response.data?.data)
-  } catch (error: any) {
-    console.error('保存运行时配置失败:', error)
-    throw new Error(error.response?.data?.detail || error.message || '保存配置失败')
-  }
+  return writeStoredBackendRuntimeSettings(updates)
 }
 
 export async function getRuntimeSettings(): Promise<RuntimeSettings> {
-  const backend = await getBackendRuntimeSettings()
+  const backend = readStoredBackendRuntimeSettings()
   const apiBaseUrl = getRuntimeApiBaseUrl()
   const mapJsKey = getRuntimeMapJsKey() || backend.vite_amap_web_js_key
-
-  // 同步 Google Maps API Key 到 localStorage 供前端地图组件读取
-  if (backend.google_maps_api_key) {
-    setRuntimeGoogleMapsApiKey(backend.google_maps_api_key)
-  }
+  const googleMapsApiKey = backend.google_maps_api_key || getRuntimeGoogleMapsApiKey()
 
   return {
     api_base_url: apiBaseUrl,
     ...backend,
     vite_amap_web_js_key: mapJsKey,
+    google_maps_api_key: googleMapsApiKey,
   }
 }
 
 export async function saveRuntimeSettings(settings: RuntimeSettings): Promise<RuntimeSettings> {
-  const previousApiBaseUrl = getRuntimeApiBaseUrl()
-  const targetApiBaseUrl = normalizeBaseUrl(settings.api_base_url) || previousApiBaseUrl
-  const updates: Partial<BackendRuntimeSettings> = {
+  const targetApiBaseUrl = normalizeBaseUrl(settings.api_base_url) || DEFAULT_API_BASE_URL
+  const backend = writeStoredBackendRuntimeSettings({
     vite_amap_web_key: settings.vite_amap_web_key,
     vite_amap_web_js_key: settings.vite_amap_web_js_key,
     google_maps_api_key: settings.google_maps_api_key,
@@ -247,20 +264,11 @@ export async function saveRuntimeSettings(settings: RuntimeSettings): Promise<Ru
     openai_api_key: settings.openai_api_key,
     openai_base_url: settings.openai_base_url,
     openai_model: settings.openai_model,
-  }
-  setRuntimeApiBaseUrl(targetApiBaseUrl)
-
-  let backend: BackendRuntimeSettings
-  try {
-    backend = await updateBackendRuntimeSettings(updates)
-  } catch (error) {
-    setRuntimeApiBaseUrl(previousApiBaseUrl)
-    throw error
-  }
+  })
 
   const apiBaseUrl = setRuntimeApiBaseUrl(targetApiBaseUrl)
-  const mapJsKey = setRuntimeMapJsKey(settings.vite_amap_web_js_key || backend.vite_amap_web_js_key)
-  setRuntimeGoogleMapsApiKey(settings.google_maps_api_key || backend.google_maps_api_key)
+  const mapJsKey = setRuntimeMapJsKey(backend.vite_amap_web_js_key)
+  setRuntimeGoogleMapsApiKey(backend.google_maps_api_key)
 
   emitRuntimeSettingsUpdated()
 
@@ -269,6 +277,17 @@ export async function saveRuntimeSettings(settings: RuntimeSettings): Promise<Ru
     ...backend,
     vite_amap_web_js_key: mapJsKey || backend.vite_amap_web_js_key,
   }
+}
+
+export async function clearRuntimeSettings(): Promise<RuntimeSettings> {
+  if (typeof window !== 'undefined') {
+    window.localStorage.removeItem(RUNTIME_BACKEND_SETTINGS_STORAGE_KEY)
+    window.localStorage.removeItem(RUNTIME_API_BASE_STORAGE_KEY)
+    window.localStorage.removeItem(RUNTIME_AMAP_WEB_JS_KEY_STORAGE_KEY)
+    window.localStorage.removeItem(RUNTIME_GOOGLE_MAPS_API_KEY_STORAGE_KEY)
+  }
+  emitRuntimeSettingsUpdated()
+  return getRuntimeSettings()
 }
 
 /**

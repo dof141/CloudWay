@@ -4,18 +4,18 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        VITE_AMAP_WEB_JS_KEY: ${VITE_AMAP_WEB_JS_KEY:-your_amap_web_js_api_key_here}
-        VITE_AMAP_WEB_KEY: ${VITE_AMAP_WEB_KEY:-your_amap_web_api_key_here}
+        VITE_AMAP_WEB_JS_KEY: ${VITE_AMAP_WEB_JS_KEY:-}
+        VITE_AMAP_WEB_KEY: ${VITE_AMAP_WEB_KEY:-}
     container_name: cloudway-app
     ports:
       - "7860:7860"
     environment:
-      - LLM_API_KEY=${LLM_API_KEY:-your_key}
-      - LLM_BASE_URL=${LLM_BASE_URL:-your_url}
-      - LLM_MODEL_ID=${LLM_MODEL_ID:-your_model}
+      - LLM_API_KEY=${LLM_API_KEY:-}
+      - LLM_BASE_URL=${LLM_BASE_URL:-https://api.openai.com/v1}
+      - LLM_MODEL_ID=${LLM_MODEL_ID:-gpt-4o-mini}
       - LLM_TIMEOUT=${LLM_TIMEOUT:-600}
-      - VITE_AMAP_WEB_KEY=${VITE_AMAP_WEB_KEY:-your_amap_web_api_key_here}
-      - XHS_COOKIE=${XHS_COOKIE:-your_xhs_cookie_here}
+      - VITE_AMAP_WEB_KEY=${VITE_AMAP_WEB_KEY:-}
+      - XHS_COOKIE=${XHS_COOKIE:-}
       - XHS_CACHE_ENABLED=${XHS_CACHE_ENABLED:-true}
       - XHS_CACHE_FRESH_TTL_SECONDS=${XHS_CACHE_FRESH_TTL_SECONDS:-3600}
       - XHS_CACHE_TTL_SECONDS=${XHS_CACHE_TTL_SECONDS:-86400}

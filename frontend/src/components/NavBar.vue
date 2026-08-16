@@ -73,6 +73,12 @@
     >
       <a-spin :spinning="settingsLoading">
         <section class="runtime-settings-panel">
+          <a-alert
+            class="runtime-settings-notice"
+            type="info"
+            show-icon
+            :message="t('settings.localOnlyNotice')"
+          />
 
           <a-form layout="vertical" class="runtime-settings-form">
             <div class="runtime-settings-grid">
@@ -164,6 +170,20 @@
                 allow-clear
               />
             </a-form-item>
+
+            <div class="runtime-settings-actions">
+              <a-popconfirm
+                :title="t('settings.clearConfirm')"
+                :ok-text="t('settings.clear')"
+                :cancel-text="t('settings.cancel')"
+                @confirm="clearSettingsNow"
+              >
+                <a-button danger>
+                  <template #icon><delete-outlined /></template>
+                  {{ t('settings.clear') }}
+                </a-button>
+              </a-popconfirm>
+            </div>
           </a-form>
         </section>
       </a-spin>
@@ -174,9 +194,10 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { message } from 'ant-design-vue'
+import { DeleteOutlined } from '@ant-design/icons-vue'
 import { useI18n } from 'vue-i18n'
 import type { RuntimeSettings } from '@/types'
-import { getRuntimeSettings, saveRuntimeSettings } from '@/services/api'
+import { clearRuntimeSettings, getRuntimeSettings, saveRuntimeSettings } from '@/services/api'
 
 const { t, locale } = useI18n()
 const settingsVisible = ref(false)
@@ -256,6 +277,16 @@ const saveSettingsNow = async () => {
     settingsSaving.value = false
   }
 }
+
+const clearSettingsNow = async () => {
+  try {
+    const cleared = await clearRuntimeSettings()
+    applyRuntimeSettings(cleared)
+    message.success(t('settings.messages.cleared'))
+  } catch (error: any) {
+    message.error(error?.message || t('settings.messages.clearFailed'))
+  }
+}
 </script>
 
 <style scoped>
@@ -318,6 +349,7 @@ const saveSettingsNow = async () => {
   display: flex !important;
   align-items: center !important;
   min-height: 70px;
+  width: auto !important;
   flex: 0 0 auto;
 }
 
@@ -541,5 +573,15 @@ const saveSettingsNow = async () => {
 
 .runtime-settings-form :deep(.ant-form-item) {
   margin-bottom: 12px;
+}
+
+.runtime-settings-notice {
+  margin-bottom: 16px;
+}
+
+.runtime-settings-actions {
+  display: flex;
+  justify-content: flex-start;
+  min-height: 32px;
 }
 </style>

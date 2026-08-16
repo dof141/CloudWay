@@ -173,13 +173,98 @@ sequenceDiagram
 
 ### Docker / Compose 配置约定
 
-推荐通过 docker-compose 一键启动项目（包含前端和后端环境），在运行之前，确保填补 `.env` 文件相关的环境变量：
+推荐通过 Docker Compose 一键启动项目（包含前端和后端环境）。第三方密钥默认由使用者在前端设置页填写并保存在自己的浏览器中，服务器无需预先配置密钥：
 
-* 容器启动时不再读取项目目录里的 `backend/.env`，请确保将配置以环境变量的形式传入。
-* `docker-compose.yaml` 中显式配置了必要的运行时代理和 API keys，支持传入 `GOOGLE_MAPS_API_KEY` 与 `GOOGLE_MAPS_PROXY` 等变量。
-* 前端构建期变量 `VITE_AMAP_WEB_JS_KEY` 会通过 `build.args` 自动注入前端。
+* 浏览器使用 `localStorage` 保存 LLM、高德、Google Maps 和小红书配置。
+* 前端通过专用请求头把配置发送给后端，后端只在当前进程内存中使用，不写入文件、数据库或任务历史。
+* 部署方仍可通过根目录 `.env` 提供服务器级回退配置，但这不是启动容器的前置条件。
+* 线上必须配置 HTTPS，避免 API Key 和 Cookie 在传输过程中泄露。
 
+### 云服务器 Docker 部署
 
+以下步骤以 Ubuntu 云服务器为例。建议服务器至少具备 2 GB 内存，并提前在云平台安全组中开放 TCP `7860` 端口。
+
+#### 1. 安装 Docker 和 Git
+
+```bash
+sudo apt update
+sudo apt install -y docker.io docker-compose-plugin git
+sudo systemctl enable --now docker
+```
+
+#### 2. 克隆项目及 12306 子模块
+
+车票查询功能依赖 `external/12306-skill` Git 子模块，克隆时必须使用 `--recurse-submodules`：
+
+```bash
+git clone --recurse-submodules https://github.com/dof141/CloudWay.git
+cd CloudWay
+```
+
+如果已经普通克隆过项目，进入项目目录后补充执行：
+
+```bash
+git submodule update --init --recursive
+```
+
+#### 3. 可选：配置服务器级回退密钥
+
+如果希望所有使用者共用服务器配置，可以创建 `.env`：
+
+```bash
+cp .env.example .env
+nano .env
+```
+
+以下密钥均可留空：
+
+```dotenv
+LLM_API_KEY=
+LLM_BASE_URL=https://api.openai.com/v1
+LLM_MODEL_ID=gpt-4o-mini
+
+VITE_AMAP_WEB_KEY=
+VITE_AMAP_WEB_JS_KEY=
+
+XHS_COOKIE=
+```
+
+不需要服务器级回退配置时，可以跳过本步骤直接启动。`.env` 只保留在服务器上，不要提交到 Git。
+
+#### 4. 构建并启动
+
+```bash
+sudo docker compose -f docker-compose.yaml up -d --build
+```
+
+查看容器状态和日志：
+
+```bash
+sudo docker compose -f docker-compose.yaml ps
+sudo docker compose -f docker-compose.yaml logs -f cloudway
+```
+
+启动成功后访问：
+
+```text
+http://服务器公网IP:7860
+```
+
+首次进入页面后，点击导航栏中的设置按钮，填写需要使用的 API Key 和小红书 Cookie。页面会明确提示“配置仅保存在当前浏览器中，服务器不会保存”；更换浏览器、域名或清除浏览器数据后需要重新填写。
+
+#### 5. 更新线上版本
+
+```bash
+cd CloudWay
+git pull --ff-only
+git submodule update --init --recursive
+sudo docker compose -f docker-compose.yaml up -d --build
+```
+
+小红书搜索缓存存储在 Docker 卷 `cloudway_data` 的 `/app/backend/data` 目录中，正常重建或重启容器不会丢失。需要停止服务时执行：
+
+```bash
+sudo docker compose -f docker-compose.yaml down
 ```
 
 本地开发仍可按下面步骤分别配置和启动 `backend/.env` 和 `frontend/.env`。

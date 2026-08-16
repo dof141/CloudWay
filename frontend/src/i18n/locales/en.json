@@ -37,6 +37,9 @@
     "title": "Runtime Settings",
     "saveApply": "Save & Apply",
     "cancel": "Cancel",
+    "localOnlyNotice": "Settings are stored only in this browser and are never saved by the server.",
+    "clear": "Clear Settings",
+    "clearConfirm": "Clear all settings saved in this browser?",
     "labels": {
       "apiBaseUrl": "Backend URL",
       "amapJsKey": "AMap JS Key",
@@ -59,7 +62,9 @@
     "messages": {
       "loadFailed": "Failed to load settings",
       "saveFailed": "Failed to save settings",
-      "saved": "Settings saved and applied"
+      "saved": "Settings saved in this browser",
+      "clearFailed": "Failed to clear settings",
+      "cleared": "Browser settings cleared"
     }
   },
   "home": {

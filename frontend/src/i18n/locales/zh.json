@@ -37,6 +37,9 @@
     "title": "配置",
     "saveApply": "保存并应用",
     "cancel": "取消",
+    "localOnlyNotice": "配置仅保存在当前浏览器中，服务器不会保存。",
+    "clear": "清除配置",
+    "clearConfirm": "确定清除当前浏览器中保存的全部配置吗？",
     "labels": {
       "apiBaseUrl": "后端地址",
       "amapJsKey": "高德地图 JS Key",
@@ -59,7 +62,9 @@
     "messages": {
       "loadFailed": "读取设置失败",
       "saveFailed": "保存设置失败",
-      "saved": "设置已保存并应用"
+      "saved": "设置已保存到当前浏览器",
+      "clearFailed": "清除配置失败",
+      "cleared": "浏览器配置已清除"
     }
   },
   "home": {

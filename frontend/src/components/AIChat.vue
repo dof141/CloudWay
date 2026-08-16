@@ -154,9 +154,8 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import axios from 'axios'
 import type { ChatMessage, TripPlan } from '@/types'
-import { getRuntimeApiBaseUrl } from '@/services/api'
+import apiClient from '@/services/api'
 
 const props = defineProps<{
   tripPlan: TripPlan | null
@@ -226,8 +225,7 @@ const sendChatMessage = async () => {
   scrollChatToBottom()
 
   try {
-    const apiBase = getRuntimeApiBaseUrl()
-    const res = await axios.post(`${apiBase}/api/chat/ask`, {
+    const res = await apiClient.post('/api/chat/ask', {
       message: text,
       trip_plan: props.tripPlan,
       history: chatHistory.value.slice(0, -1),

@@ -14,8 +14,14 @@ from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
-from ..config import get_settings, validate_config, print_config
+from fastapi.responses import FileResponse, JSONResponse
+from ..config import (
+    RUNTIME_SETTINGS_HEADER,
+    apply_client_runtime_settings,
+    get_settings,
+    print_config,
+    validate_config,
+)
 from .routes import trip, poi, map as map_routes, chat, settings as settings_routes, memory_routes
 
 # 获取配置
@@ -40,7 +46,26 @@ async def intercept_proxy_path(request: Request, call_next):
     if "/api/" in path and not path.startswith("/api/"):
         api_index = path.find("/api/")
         request.scope["path"] = path[api_index:]
-        
+
+    encoded_settings = request.headers.get(RUNTIME_SETTINGS_HEADER)
+    if encoded_settings:
+        try:
+            settings_changed = apply_client_runtime_settings(encoded_settings)
+        except ValueError as e:
+            return JSONResponse(status_code=400, content={"detail": str(e)})
+
+        if settings_changed:
+            from ..agents.trip_planner_agent import reset_trip_planner_agent
+            from ..services.amap_service import reset_amap_service
+            from ..services.google_map_service import reset_google_map_service
+            from ..services.llm_service import reset_llm
+
+            reset_llm()
+            reset_amap_service()
+            reset_google_map_service()
+            reset_trip_planner_agent()
+            print("🔐 已应用浏览器运行配置（仅内存）")
+
     return await call_next(request)
 
 # 配置CORS
