@@ -1,0 +1,3 @@
+[submodule "external/12306-skill"]
+	path = external/12306-skill
+	url = https://github.com/kirorab/12306-skill.git

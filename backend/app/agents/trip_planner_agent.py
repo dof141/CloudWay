@@ -9,6 +9,7 @@ from hello_agents.tools import MCPTool
 from ..services.llm_service import get_llm
 from ..models.schemas import TripRequest, TripPlan, DayPlan, Attraction, Meal, WeatherInfo, Location, Hotel
 from ..config import get_settings
+from .train_ticket_agent import TrainTicketAgent
 
 # ============ Agent提示词 (动态模版化，支持 amap / google 双供应商) ============
 
@@ -170,7 +171,7 @@ PLANNER_AGENT_PROMPT = """你是行程规划专家。你的任务是根据景点
 9. **景点图片**: 不需要在JSON中填写 image_url 字段，图片由前端根据景点名称自动从小红书获取。
 10. **多城市行程要求**:
     - 每个 day 对象中必须包含 "city" 字段标明当天所在城市
-    - 城市切换当天设置 "is_transfer_day": true，并在 "transfer_info" 中**仅给出交通方式建议和大致时长**（如"建议乘坐高铁，约2-3小时"），**禁止编造具体车次、班次号、出发时间、到达时间等不可验证的信息**
+    - 城市切换当天设置 "is_transfer_day": true，并在 "transfer_info" 中给出交通方式建议和大致时长。只有输入中存在 12306 查询结果时才能引用其中的具体车次、车站和时间，禁止编造任何未查询到的信息
     - 城际移动日的景点数量可适当减少为1-2个
     - budget 中的 "total_inter_city_transport" 统计城际交通费用(单城市时为0)
     - "cities" 数组列出所有途经城市(单城市时只有一个元素)
@@ -187,6 +188,7 @@ class MultiAgentTripPlanner:
         try:
             settings = get_settings()
             self.llm = get_llm()
+            self.ticket_agent = TrainTicketAgent()
 
             # ---------- 判断地图供应商 ----------
             from ..services.map_dispatcher import get_map_provider
@@ -513,6 +515,34 @@ class MultiAgentTripPlanner:
 
             print(f"\n✅ 全部 {total_cities} 个城市基础信息搜集完成\n")
 
+            # ========== 查询出发地到首个目的地的去程车票 ==========
+            outbound_tickets: Dict[str, Any] = {}
+            origin_city = (getattr(request, "origin_city", "") or "").strip()
+            destination_city = city_names[0]
+            if origin_city and origin_city != destination_city:
+                print(f"🚄 正在查询 {origin_city} → {destination_city} 的去程车票...")
+                await self._emit_progress(
+                    progress_callback,
+                    "ticket_search",
+                    f"正在查询 {origin_city} 到 {destination_city} 的去程车票...",
+                    80,
+                )
+                outbound_tickets = await self.ticket_agent.search_outbound(
+                    origin_city,
+                    destination_city,
+                    request.start_date,
+                )
+                if outbound_tickets.get("status") == "success":
+                    recommended = outbound_tickets.get("recommended", {})
+                    print(
+                        "🚄 去程推荐: "
+                        f"{recommended.get('train_code', '')} "
+                        f"{recommended.get('depart_time', '')} → "
+                        f"{recommended.get('arrive_time', '')}"
+                    )
+                else:
+                    print(f"⚠️  去程车票查询未成功: {outbound_tickets.get('message', '')}")
+
             # ========== 统一规划阶段 ==========
             planning_label = "正在生成多城市行程计划..." if total_cities > 1 else "正在生成旅行计划..."
             print(f"📋 步骤4: {planning_label}")
@@ -535,6 +565,7 @@ class MultiAgentTripPlanner:
                 all_attractions,
                 all_weather,
                 all_hotels,
+                outbound_tickets,
                 memory_snippet,
             )
             print(f"行程规划结果: {planner_response[:300]}...\n")
@@ -583,6 +614,7 @@ class MultiAgentTripPlanner:
         attractions: Dict[str, str],
         weather: Dict[str, str],
         hotels: Dict[str, str],
+        outbound_tickets: Dict[str, Any],
         memory_snippet: str = "",
     ) -> str:
         """规划阶段使用更长超时，并在超时后重试一次。
@@ -594,7 +626,14 @@ class MultiAgentTripPlanner:
             memory_snippet: 用户历史偏好文本，注入规划 Prompt
         """
         timeout = int(os.getenv("TRIP_PLANNER_TIMEOUT", "180"))
-        planner_query = self._build_planner_query(request, attractions, weather, hotels, memory_snippet)
+        planner_query = self._build_planner_query(
+            request,
+            attractions,
+            weather,
+            hotels,
+            outbound_tickets,
+            memory_snippet,
+        )
 
         try:
             return await asyncio.to_thread(
@@ -626,6 +665,7 @@ class MultiAgentTripPlanner:
         attractions: Dict[str, str],
         weather: Dict[str, str],
         hotels: Dict[str, str],
+        outbound_tickets: Dict[str, Any],
         memory_snippet: str = "",
     ) -> str:
         """构建行程规划查询（支持多城市）
@@ -658,6 +698,7 @@ class MultiAgentTripPlanner:
         query = f"""请根据以下信息生成{title}:
 
 **基本信息:**
+- 出发城市: {request.origin_city or '未提供'}
 - 途经城市及天数分配:
 {cities_desc}
 - 总天数: {request.travel_days}天
@@ -665,6 +706,18 @@ class MultiAgentTripPlanner:
 - 交通方式: {request.transportation}
 - 住宿: {request.accommodation}
 - 偏好: {', '.join(request.preferences) if request.preferences else '无'}
+"""
+        if outbound_tickets:
+            query += f"""
+**12306 去程车票查询结果（查询时刻快照）:**
+{json.dumps(outbound_tickets, ensure_ascii=False, indent=2)}
+
+去程车票使用规则：
+1. status 为 success 时，优先采用 recommended；用户强调赶时间时可采用 fastest
+2. 首日设置 is_transfer_day=true，并在 transfer_info 中写明真实车次、车站、出发到达时间和耗时
+3. 只能使用以上查询结果中的车次信息，禁止自行编造车次或余票
+4. 当前数据没有票价，不得声称这是最便宜方案，也不得编造车票价格
+5. status 不为 success 时，使用不含具体车次的普通交通建议
 """
         if memory_snippet:
             query += f"""

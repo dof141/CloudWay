@@ -88,6 +88,7 @@ export interface TripPlan {
 }
 
 export interface TripFormData {
+  origin_city?: string
   city: string
   cities?: CityStay[]
   start_date: string
@@ -128,6 +129,7 @@ export type TripTaskStage =
   | 'attraction_search'
   | 'weather_search'
   | 'hotel_search'
+  | 'ticket_search'
   | 'planning'
   | 'graph_building'
   | 'completed'

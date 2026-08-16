@@ -37,6 +37,18 @@
               <h3>{{ t('home.step1') }}</h3>
             </div>
 
+            <a-form-item name="origin_city" :rules="formRules.originCity">
+              <template #label>
+                <span class="field-label">{{ t('home.originCityLabel') }}</span>
+              </template>
+              <a-input
+                v-model:value="formData.origin_city"
+                :placeholder="t('home.originCityPlaceholder')"
+                size="large"
+                class="field-input"
+              />
+            </a-form-item>
+
             <!-- 多城市动态列表 -->
             <div class="city-list">
               <div v-for="(cs, idx) in formData.cities" :key="idx" class="city-row">
@@ -214,22 +226,32 @@
             <div class="step-divider" :class="{ completed: loadingProgress > 50 }"></div>
 
             <!-- Step 3: Hotels -->
-            <div class="step-node" :class="{ active: loadingProgress > 50 && loadingProgress <= 70, completed: loadingProgress > 70 }">
+            <div class="step-node" :class="{ active: loadingProgress > 50 && loadingProgress < 80, completed: loadingProgress >= 80 }">
               <div class="node-icon">
-                <i v-if="loadingProgress > 50 && loadingProgress <= 70" class="spinner-small"></i>
+                <i v-if="loadingProgress > 50 && loadingProgress < 80" class="spinner-small"></i>
                 <svg v-else fill="currentColor" width="25px" height="25px" viewBox="0 0 24 24" version="1.1" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
                     <g id="Layer_Grid"/><g id="Layer_2">
                     <path d="M21,8c0-2.2-1.8-4-4-4H7C4.8,4,3,5.8,3,8v3.8c-0.6,0.5-1,1.3-1,2.2v2.7V17v2c0,0.6,0.4,1,1,1s1-0.4,1-1v-1h16v1   c0,0.6,0.4,1,1,1s1-0.4,1-1v-2v-0.3V14c0-0.9-0.4-1.7-1-2.2V8z M5,8c0-1.1,0.9-2,2-2h10c1.1,0,2,0.9,2,2v3h-1v-1c0-1.7-1.3-3-3-3   h-1c-0.8,0-1.5,0.3-2,0.8C11.5,7.3,10.8,7,10,7H9c-1.7,0-3,1.3-3,3v1H5V8z M16,10v1h-3v-1c0-0.6,0.4-1,1-1h1C15.6,9,16,9.4,16,10z    M11,10v1H8v-1c0-0.6,0.4-1,1-1h1C10.6,9,11,9.4,11,10z M20,16H4v-2c0-0.6,0.4-1,1-1h3h3h2h3h3c0.6,0,1,0.4,1,1V16z"/></g>
                 </svg>
               </div>
-              <p class="node-text">{{ loadingProgress > 70 ? t('home.loading.recommendedHotels') : t('home.loading.recommendingHotels') }}</p>
+              <p class="node-text">{{ loadingProgress >= 80 ? t('home.loading.recommendedHotels') : t('home.loading.recommendingHotels') }}</p>
             </div>
-            <div class="step-divider" :class="{ completed: loadingProgress > 70 }"></div>
+            <div class="step-divider" :class="{ completed: loadingProgress >= 80 }"></div>
 
-            <!-- Step 4: Planning -->
-            <div class="step-node" :class="{ active: loadingProgress > 70 && loadingProgress < 100, completed: loadingProgress >= 100 }">
+            <!-- Step 4: Train tickets -->
+            <div class="step-node" :class="{ active: loadingProgress >= 80 && loadingProgress < 85, completed: loadingProgress >= 85 }">
               <div class="node-icon">
-                <i v-if="loadingProgress > 70 && loadingProgress < 100" class="spinner-small"></i>
+                <i v-if="loadingProgress >= 80 && loadingProgress < 85" class="spinner-small"></i>
+                <CarOutlined v-else class="ticket-node-icon" />
+              </div>
+              <p class="node-text">{{ loadingProgress >= 85 ? t('home.loading.queriedTickets') : t('home.loading.queryingTickets') }}</p>
+            </div>
+            <div class="step-divider" :class="{ completed: loadingProgress >= 85 }"></div>
+
+            <!-- Step 5: Planning -->
+            <div class="step-node" :class="{ active: loadingProgress >= 85 && loadingProgress < 100, completed: loadingProgress >= 100 }">
+              <div class="node-icon">
+                <i v-if="loadingProgress >= 85 && loadingProgress < 100" class="spinner-small"></i>
                 <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
               </div>
               <p class="node-text">{{ loadingProgress >= 100 ? t('home.loading.done') : t('home.loading.generatingPlan') }}</p>
@@ -294,6 +316,7 @@ import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
+import { CarOutlined } from '@ant-design/icons-vue'
 import { generateTripPlan, getOrCreateUserId, getTripHistory } from '@/services/api'
 import { getCurrentLocale } from '@/i18n'
 import NavBar from '@/components/NavBar.vue'
@@ -302,6 +325,7 @@ import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 
 type LandingFormData = {
+  origin_city: string
   cities: Array<{ city: string; days: number }>
   start_date: Dayjs | null
   transportation: string
@@ -330,6 +354,7 @@ const getStageStatusText = (stage: TripTaskEvent['stage']) => {
   if (stage === 'attraction_search') return t('home.loading.searchingAttractions')
   if (stage === 'weather_search') return t('home.loading.queryingWeather')
   if (stage === 'hotel_search') return t('home.loading.recommendingHotels')
+  if (stage === 'ticket_search') return t('home.loading.queryingTickets')
   if (stage === 'planning') return t('home.loading.generatingPlan')
   if (stage === 'graph_building') return t('home.loading.generatingPlan')
   if (stage === 'completed') return t('home.loading.done')
@@ -346,10 +371,12 @@ const interestOptions = [
 ]
 
 const formRules = computed(() => ({
+  originCity: [{ required: true, message: t('home.originCityRequired') }],
   startDate: [{ required: true, message: t('home.startDateRequired') }],
 }))
 
 const formData = reactive<LandingFormData>({
+  origin_city: '',
   cities: [{ city: '', days: 2 }],
   start_date: null,
   transportation: '公共交通',
@@ -464,6 +491,10 @@ onUnmounted(() => {
 })
 
 const handleSubmit = async () => {
+  if (!formData.origin_city.trim()) {
+    message.error(t('home.originCityRequired'))
+    return
+  }
   // 校验：至少一个城市名非空
   const validCities = formData.cities.filter(cs => cs.city.trim())
   if (validCities.length === 0) {
@@ -497,6 +528,7 @@ const handleSubmit = async () => {
     const endDate = computedEndDate.value!
 
     const requestData: TripFormData = {
+      origin_city: formData.origin_city.trim(),
       city: citiesPayload[0].city,
       cities: citiesPayload,
       start_date: formData.start_date.format('YYYY-MM-DD'),
@@ -1173,7 +1205,7 @@ const handleSubmit = async () => {
   align-items: flex-start;
   justify-content: space-between;
   width: 100%;
-  max-width: 680px;
+  max-width: 820px;
   margin: 0 auto 50px auto;
 }
 
@@ -1197,6 +1229,10 @@ const handleSubmit = async () => {
   margin-bottom: 12px;
   color: rgba(236, 243, 250, 0.4);
   transition: all 0.35s ease;
+}
+
+.ticket-node-icon {
+  font-size: 22px;
 }
 
 .step-node.active .node-icon {
@@ -1334,6 +1370,30 @@ const handleSubmit = async () => {
 
   .interest-group {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .stepper-container {
+    margin-bottom: 38px;
+  }
+
+  .step-node {
+    width: 56px;
+    min-width: 0;
+  }
+
+  .node-icon {
+    width: 44px;
+    height: 44px;
+    margin-bottom: 10px;
+  }
+
+  .node-text {
+    font-size: 11px;
+  }
+
+  .step-divider {
+    min-width: 8px;
+    margin-top: 21px;
   }
 }
 </style>

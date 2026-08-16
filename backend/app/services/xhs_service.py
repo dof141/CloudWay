@@ -14,6 +14,7 @@ import httpx
 from typing import List, Dict, Any
 from ..config import get_settings
 from .llm_service import get_llm
+from .xhs_cache import xhs_attraction_cache
 from .xhs_sign.sign_util import generate_request_params, splice_str, generate_x_b3_traceid, trans_cookies
 
 logger = logging.getLogger(__name__)
@@ -267,11 +268,26 @@ def search_xhs_attractions(city: str, keywords: str, language: str = "zh") -> st
         keywords: 搜索关键词
         language: 目标输出语言 (zh/en/ja 等)
     """
+    cache_language = (language or "zh").strip().lower().split("-")[0]
+    cache_entry = xhs_attraction_cache.get(city, keywords, cache_language)
+    if cache_entry and cache_entry.is_fresh:
+        print(
+            f"💾 [XHS_CACHE] 命中新鲜缓存: {city} {keywords} "
+            f"({cache_entry.age_seconds // 60} 分钟前)"
+        )
+        return cache_entry.result_text
+
+    stale_result = cache_entry.result_text if cache_entry else ""
+
+    def use_stale_cache(reason: str) -> str:
+        print(f"⚠️  [XHS_CACHE] {reason}，使用24小时内缓存: {city} {keywords}")
+        return stale_result
+
     print(f"🔍 [XHS_SERVICE] 正在呼叫小红书 API 搜索: {city} {keywords}")
-    client = get_xhs_client()
     query = f"{city} {keywords} 旅游 景点攻略"
 
     try:
+        client = get_xhs_client()
         # 使用原生签名客户端搜索
         res_json = client.search_notes(keyword=query)
         items = res_json.get("data", {}).get("items", [])[:4]
@@ -306,14 +322,20 @@ def search_xhs_attractions(city: str, keywords: str, language: str = "zh") -> st
                 combined_text += f"\n笔记{i+1}:\n标题: {title}\n正文内容: {desc}\n"
 
     except XHSCookieExpiredError:
+        if stale_result:
+            return use_stale_cache("Cookie不可用或触发风控")
         raise
     except Exception as e:
         print(f"❌ 小红书接口抓取崩盘: {e}")
+        if stale_result:
+            return use_stale_cache("小红书搜索失败")
         raise XHSCookieExpiredError(
             f"小红书访问超时或 Cookie 失效(风控拦截)，抓取失败。请更新 XHS_COOKIE"
         )
 
     if not combined_text:
+        if stale_result:
+            return use_stale_cache("本次搜索未返回有效内容")
         return f"未在小红书检索到关于 {city} {keywords} 的内容。"
 
     # ======== 轻量级提取过程 ========
@@ -321,7 +343,7 @@ def search_xhs_attractions(city: str, keywords: str, language: str = "zh") -> st
     llm = get_llm()
 
     # 根据目标语言构建翻译附加指令
-    _lang = (language or "zh").strip().lower().split("-")[0]
+    _lang = cache_language
     _lang_names = {"en": "English", "ja": "Japanese", "ko": "Korean", "fr": "French", "de": "German", "es": "Spanish"}
     if _lang != "zh" and _lang in _lang_names:
         translation_instruction = f"""
@@ -378,6 +400,7 @@ JSON 返回示例:
             extracted = json.loads(content)
 
         final_result = f"这是小红书热门精选游记的提取结果，附带确切坐标（图片由前端单独搜索获取）：\n"
+        result_count = 0
         for item in extracted:
             name = item.get("name", "")
             if not name:
@@ -388,12 +411,21 @@ JSON 返回示例:
             loc = geocode_amap(name, city, name_zh=name_zh, name_en=name_en)
             item["location"] = loc
             final_result += json.dumps(item, ensure_ascii=False) + "\n"
+            result_count += 1
 
+        if result_count == 0:
+            if stale_result:
+                return use_stale_cache("本次提取未生成有效景点")
+            return "尝试提取小红书结构化数据失败，降级回常规处理。"
+
+        xhs_attraction_cache.put(city, keywords, cache_language, final_result)
         print(f"✅ [XHS_SERVICE] 小红书数据挖掘完毕，已装载进上下文。")
         return final_result
 
     except Exception as e:
         print(f"❌ 大模型提纯小红书数据异常: {e}")
+        if stale_result:
+            return use_stale_cache("大模型提取失败")
         return "尝试提取小红书结构化数据失败，降级回常规处理。"
 
 
