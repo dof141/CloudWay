@@ -1,12 +1,12 @@
 services:
-  trip-planner:
+  cloudway:
     build:
       context: .
       dockerfile: Dockerfile
       args:
         VITE_AMAP_WEB_JS_KEY: ${VITE_AMAP_WEB_JS_KEY:-your_amap_web_js_api_key_here}
         VITE_AMAP_WEB_KEY: ${VITE_AMAP_WEB_KEY:-your_amap_web_api_key_here}
-    container_name: helloagents-trip-planner
+    container_name: cloudway-app
     ports:
       - "7860:7860"
     environment:
@@ -22,8 +22,8 @@ services:
       - PORT=7860
       - LOG_LEVEL=INFO
     volumes:
-      - trip_data:/app/backend/data
+      - cloudway_data:/app/backend/data
     restart: unless-stopped
 
 volumes:
-  trip_data:
+  cloudway_data:

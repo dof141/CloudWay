@@ -6,7 +6,7 @@ cd /app
 BIND_HOST=${HOST:-0.0.0.0}
 BIND_PORT=${PORT:-7860}
 
-echo "🚀 启动旅途星辰 AI 旅行助手..."
+echo "🚀 启动云程 AI 旅行助手..."
 echo "   绑定的地址: ${BIND_HOST}:${BIND_PORT}"
 echo "   工作目录: $(pwd)"
 
