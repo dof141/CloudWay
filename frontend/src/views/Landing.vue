@@ -294,7 +294,7 @@ import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
-import { generateTripPlan, getTripHistory } from '@/services/api'
+import { generateTripPlan, getOrCreateUserId, getTripHistory } from '@/services/api'
 import { getCurrentLocale } from '@/i18n'
 import NavBar from '@/components/NavBar.vue'
 import type { TripFormData, TripTaskEvent, TripHistoryItem, CityStay } from '@/types'
@@ -507,6 +507,7 @@ const handleSubmit = async () => {
       preferences: formData.preferences,
       free_text_input: formData.free_text_input,
       language: getCurrentLocale(),
+      user_id: getOrCreateUserId(),
     }
 
     const response = await generateTripPlan(requestData, {
