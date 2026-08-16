@@ -11,7 +11,7 @@
           <span class="navbar-toggler-bar"></span>
           <span class="navbar-toggler-bar"></span>
         </button>
-        <button class="navbar-brand landing-brand" type="button" @click="handleBrandClick">CloudWay</button>
+        <button class="navbar-brand landing-brand" type="button" @click="handleBrandClick">{{ t('app.brand') }}</button>
       </div>
       <div class="navbar-collapse landing-navbar-collapse" id="navbarToggler">
         <ul class="navbar-nav ml-auto landing-nav">
