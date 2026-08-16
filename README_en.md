@@ -1,4 +1,4 @@
-# TripStar - AI Travel Agent
+# CloudWay - AI Travel Agent
 
 
 > **A Multi-Agent Collaborative Travel Planning Platform Based on the HelloAgents Framework**
@@ -20,13 +20,13 @@
 
 > [!IMPORTANT]
 > 
-> You can try the project directly online. For the full experience, you can deploy it locally. **Due to risk control, the online trial does not connect to Xiaohongshu (RED)**: [TripStar - AI Travel Agent](https://modelscope.cn/studios/lcclxy/Journey-to-the-China)
+> You can try the project directly online. For the full experience, you can deploy it locally. **Due to risk control, the online trial does not connect to Xiaohongshu (RED)**: [CloudWay - AI Travel Agent](https://modelscope.cn/studios/lcclxy/Journey-to-the-China)
 > 
 > Features include: Travel Plans, Attraction Maps Overview, Budget Details, Daily Itinerary: Itinerary Description, Transportation, Accommodation Recommendations, Attraction Scheduling (address, duration, description, reservation reminders), Dining Plans, Weather Information, Knowledge Graph Visualization, Immersive AI Q&A Companion...
 
 ## Project Introduction
 
-**TripStar** is an innovative AI travel agent application, a multi-agent collaborative travel planning platform based on the HelloAgents framework, designed to solve the "information overload" and "decision fatigue" users face when planning trips.
+**CloudWay** is an innovative AI travel agent application, a multi-agent collaborative travel planning platform based on the HelloAgents framework, designed to solve the "information overload" and "decision fatigue" users face when planning trips.
 
 Unlike traditional travel guide websites, this project adopts an innovative model based on **Large Language Models (LLM)** and **Multi-Agent** collaboration. Like an experienced human travel butler, it comprehensively considers users' personalized needs (preferences: transportation, accommodation style, travel interests, special requests, etc.), automatically searching for travel info, checking local weather, curating hotels, and planning optimal attraction routes to **quickly generate a travel itinerary**.
 
@@ -219,7 +219,7 @@ npm run dev
 ## Directory Structure
 
 ```text
-TripStar/
+CloudWay/
 ├── backend/                       # Python FastAPI Backend
 │   ├── app/
 │   │   ├── api/routes/            # Core routing (trip.py, poi.py, chat.py)
@@ -264,13 +264,13 @@ TripStar/
 
 ## Star History
 
-<a href="https://www.star-history.com/?repos=1sdv%2FTripStar&type=date&logscale=&legend=top-left">
+<a href="https://www.star-history.com/?repos=dof141%2FCloudWay&type=date&logscale=&legend=top-left">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/image?repos=1sdv/TripStar&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/image?repos=1sdv/TripStar&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/image?repos=1sdv/TripStar&type=date&legend=top-left" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/image?repos=dof141/CloudWay&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/image?repos=dof141/CloudWay&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/image?repos=dof141/CloudWay&type=date&legend=top-left" />
  </picture>
 </a>
 
 ## 🙏 Acknowledgements
-Thanks to the [linux.do](https://linux.do/) community for communication and feedback, making TripStar iterate more efficiently.
+Thanks to the [linux.do](https://linux.do/) community for communication and feedback, making CloudWay iterate more efficiently.

@@ -15,7 +15,7 @@
 [🇨🇳 中文](README.md) | [🇺🇸 English](README_en.md) | [🇯🇵 日本語](README_ja.md)
 
 
-# 旅途星辰 - AI 旅行智能体
+# 云程 - AI 旅行智能体
 **基于 HelloAgents 框架打造的多智能体协作文旅规划平台**
 </div>
 
@@ -28,7 +28,7 @@
 
 ## 项目简介
 
-**旅途星辰 (TripStar)** 是一个创新的 AI 文旅智能体应用，基于 HelloAgents 框架打造的多智能体协作文旅规划平台，旨在解决用户在规划旅行时面临的"信息过载"和"决策疲劳"问题。
+**云程 (CloudWay)** 是一个创新的 AI 文旅智能体应用，基于 HelloAgents 框架打造的多智能体协作文旅规划平台，旨在解决用户在规划旅行时面临的"信息过载"和"决策疲劳"问题。
 
 有别于传统的旅游攻略网站，本项目采用了基于 **大语言模型 (LLM)** 和 **多智能体 (Multi-Agent)** 协作架构的创新模式。它能像一位经验丰富的人类旅行管家一样，全面考虑用户的个性化需求（偏好设置：交通方式、住宿风格、旅行兴趣、特殊需求等），自动搜索旅行信息、查询当地天气、精选酒店并规划最优景点路线，以**快速完成旅游攻略**。
 
@@ -243,7 +243,7 @@ npm run dev
 ## 目录结构与关键代码导读
 
 ```text
-TripStar/
+CloudWay/
 ├── backend/                       # Python FastAPI 后端
 │   ├── app/
 │   │   ├── api/routes/            # 核心路由 (trip.py, poi.py, chat.py)
@@ -297,7 +297,7 @@ TripStar/
 
 ## 🧠 用户偏好记忆模块
 
-TripStar 内置一个**分权重的用户专属旅行偏好记忆库**，带遗忘机制与 TOP-K 限制。开启后，系统会在每次行程生成成功后自动提取用户的稳定旅行偏好并打分入库；下次规划时，高权重偏好会被注入行程规划 Agent 的 Prompt，让推荐越来越贴合用户习惯。
+CloudWay 内置一个**分权重的用户专属旅行偏好记忆库**，带遗忘机制与 TOP-K 限制。开启后，系统会在每次行程生成成功后自动提取用户的稳定旅行偏好并打分入库；下次规划时，高权重偏好会被注入行程规划 Agent 的 Prompt，让推荐越来越贴合用户习惯。
 
 ### 快速开启
 
@@ -377,15 +377,15 @@ pip install aiosqlite
 
 ## Star History
 
-<a href="https://www.star-history.com/?repos=1sdv%2FTripStar&type=date&logscale=&legend=top-left">
+<a href="https://www.star-history.com/?repos=dof141%2FCloudWay&type=date&logscale=&legend=top-left">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/image?repos=1sdv/TripStar&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/image?repos=1sdv/TripStar&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/image?repos=1sdv/TripStar&type=date&legend=top-left" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/image?repos=dof141/CloudWay&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/image?repos=dof141/CloudWay&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/image?repos=dof141/CloudWay&type=date&legend=top-left" />
  </picture>
 </a>
 
 ## 🙏 致谢
-感谢 [linuxdo](https://linux.do/) 社区的交流、分享与反馈，让 TripStar 的迭代更高效，同时欢迎大家进群交流反馈
+感谢 [linuxdo](https://linux.do/) 社区的交流、分享与反馈，让 CloudWay 的迭代更高效，同时欢迎大家进群交流反馈
 <img width="431" height="411" alt="image" src="https://github.com/user-attachments/assets/118d46c0-a8e9-42fb-8110-c233fc4f6277" />
 
